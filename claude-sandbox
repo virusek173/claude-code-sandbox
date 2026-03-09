@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+#
+# claude-sandbox — wrapper that runs Claude Code inside a Docker container
+#
+# Usage:
+#   claude-sandbox          — interactive session in the current directory
+#   claude-sandbox "prompt" — one-shot command
+#   claude-sandbox --help   — Claude Code help
+#
+# The container sees ONLY the current project directory.
+# OAuth credentials are shared from the host (~/.claude).
+
+set -euo pipefail
+
+IMAGE_NAME="claude-code-sandbox"
+CLAUDE_HOME="${HOME}/.claude"
+
+# ── Check if Docker is running ─────────────────────────────────
+if ! docker info &>/dev/null; then
+    echo "❌ Docker is not running. Start Docker Desktop and try again."
+    exit 1
+fi
+
+# ── Build image if it doesn't exist ───────────────────────────
+if ! docker image inspect "${IMAGE_NAME}" &>/dev/null; then
+    echo "🔨 First-time setup — building image ${IMAGE_NAME}..."
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    docker build \
+        --build-arg USER_UID="$(id -u)" \
+        --build-arg USER_GID="$(id -g)" \
+        -t "${IMAGE_NAME}" \
+        "${SCRIPT_DIR}"
+    echo "✅ Image ready!"
+fi
+
+# ── Create auth directory if it doesn't exist ─────────────────
+mkdir -p "${CLAUDE_HOME}"
+
+# ── Start the container ────────────────────────────────────────
+exec docker run --rm -it \
+    -v "$(pwd):/workspace" \
+    -v "${CLAUDE_HOME}:/home/developer/.claude" \
+    -e TERM="${TERM:-xterm-256color}" \
+    -e LANG="${LANG:-en_US.UTF-8}" \
+    --hostname "claude-sandbox" \
+    --name "claude-sandbox-$$" \
+    "${IMAGE_NAME}" \
+    "$@"
