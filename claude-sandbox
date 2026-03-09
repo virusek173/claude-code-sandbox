@@ -33,13 +33,15 @@ if ! docker image inspect "${IMAGE_NAME}" &>/dev/null; then
     echo "✅ Image ready!"
 fi
 
-# ── Create auth directory if it doesn't exist ─────────────────
+# ── Create auth directory and config file if they don't exist ──
 mkdir -p "${CLAUDE_HOME}"
+touch "${HOME}/.claude.json"
 
 # ── Start the container ────────────────────────────────────────
 exec docker run --rm -it \
     -v "$(pwd):/workspace" \
     -v "${CLAUDE_HOME}:/home/developer/.claude" \
+    -v "${HOME}/.claude.json:/home/developer/.claude.json" \
     -e TERM="${TERM:-xterm-256color}" \
     -e LANG="${LANG:-en_US.UTF-8}" \
     --hostname "claude-sandbox" \
