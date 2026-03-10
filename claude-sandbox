@@ -40,6 +40,7 @@ touch "${HOME}/.claude.json"
 # ── Start the container ────────────────────────────────────────
 exec docker run --rm -it \
     -v "$(pwd):/workspace" \
+    -v /dev/null:/workspace/.env \
     -v "${CLAUDE_HOME}:/home/developer/.claude" \
     -v "${HOME}/.claude.json:/home/developer/.claude.json" \
     -e TERM="${TERM:-xterm-256color}" \
